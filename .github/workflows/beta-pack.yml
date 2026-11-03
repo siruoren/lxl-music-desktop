@@ -597,8 +597,9 @@ jobs:
           TAG: v${{ needs.PluginMeta.outputs.version }}-beta.${{ github.run_number }}
         run: |
           set -euo pipefail
+          # Release 附件名会把空格规范化为点；按发布后的名称生成预期列表。
           # 用 sed 取 basename：BSD/GNU 通用（find -printf 只有 GNU 有）
-          find dist -type f | sed 's#.*/##' | sort > expected.txt
+          find dist -type f | sed 's#.*/##; s/ /./g' | sort > expected.txt
           echo "准备上传的附件（$(wc -l < expected.txt | tr -d ' ') 个）："
           cat expected.txt
 
