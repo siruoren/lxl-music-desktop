@@ -10,7 +10,7 @@ const afterPack = require('./build-after-pack')
 */
 const options = {
   appId: 'cn.lxlmusic.desktop',
-  productName: 'lxl-music-desktop',
+  productName: 'LXL MUSIC',
   beforePack,
   afterPack,
   protocols: {
@@ -67,7 +67,7 @@ const winOptions = {
     allowToChangeInstallationDirectory: true,
     // differentialPackage: true,
     license: './licenses/license.rtf',
-    shortcutName: 'lxl music',
+    shortcutName: 'LXL MUSIC',
   },
 }
 /**
@@ -86,9 +86,9 @@ const linuxOptions = {
       // https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html
       // https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files
       entry: {
-        Name: 'lxl music',
-        'Name[zh_CN]': 'lxl music',
-        'Name[zh_TW]': 'lxl music',
+        Name: 'LXL MUSIC',
+        'Name[zh_CN]': 'LXL MUSIC',
+        'Name[zh_TW]': 'LXL MUSIC',
         Encoding: 'UTF-8',
         MimeType: 'x-scheme-handler/lxlmusic',
         StartupNotify: 'false',
