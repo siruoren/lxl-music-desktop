@@ -77,16 +77,16 @@
   },
   "macLanguagesInfoPlistStrings": {
     "en": {
-      "CFBundleDisplayName": "lxl music",
-      "CFBundleName": "lxl music"
+      "CFBundleDisplayName": "LXL MUSIC",
+      "CFBundleName": "LXL MUSIC"
     },
     "zh_CN": {
-      "CFBundleDisplayName": "lxl music",
-      "CFBundleName": "lxl music"
+      "CFBundleDisplayName": "LXL MUSIC",
+      "CFBundleName": "LXL MUSIC"
     },
     "zh_TW": {
-      "CFBundleDisplayName": "lxl music",
-      "CFBundleName": "lxl music"
+      "CFBundleDisplayName": "LXL MUSIC",
+      "CFBundleName": "LXL MUSIC"
     }
   },
   "repository": {
