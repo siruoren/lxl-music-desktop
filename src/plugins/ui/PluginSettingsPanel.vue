@@ -21,6 +21,12 @@
           <div v-if="field.label" :class="$style.label">{{ field.label }}</div>
           <ul :class="$style.list">
             <li v-for="(item, i) in itemsOf(field)" :key="i" :class="$style.listItem">
+              <!-- 条目带 value 且字段有 key 时渲染勾选框：勾选即把 value 写入配置（单选语义） -->
+              <input
+                v-if="field.key && item.value != null" type="checkbox"
+                :checked="valueOf(field) === item.value" :disabled="busy || field.disabled"
+                @change="setListChecked(field, item.value, $event.target.checked)"
+              />
               <span :class="$style.listName">{{ item.name }}</span>
               <span v-if="item.desc" :class="$style.listDesc">{{ item.desc }}</span>
               <span v-if="item.status" :class="$style.listStatus">{{ item.status }}</span>
@@ -220,6 +226,15 @@ export default {
       writeConfig(patch)
     }
 
+    /**
+     * 可勾选列表（list 字段带 key、条目带 value）：单选语义 ——
+     * 勾选某条目把它的 value 写入配置键；取消勾选写空串。
+     */
+    const setListChecked = (field, value, checked) => {
+      if (!field.key) return
+      setValue(field, checked ? value : '')
+    }
+
     const clearCommitTimer = () => {
       if (commitTimer) {
         clearTimeout(commitTimer)
@@ -320,6 +335,7 @@ export default {
       inputType,
       buttonsOf,
       setValue,
+      setListChecked,
       onInput,
       onChange,
       runAction,

@@ -125,8 +125,8 @@ export interface PluginSettingField {
   buttons?: PluginSettingButton[]
   /** type=info 时的文本；传函数则每次渲染求值，便于显示实时状态 */
   text?: string | (() => string)
-  /** type=list 时的条目；传函数则每次渲染求值 */
-  items?: () => Array<{ name?: string, desc?: string, status?: string }>
+  /** type=list 时的条目；传函数则每次渲染求值。条目带 value 且字段带 key 时渲染勾选框（单选语义：勾选把 value 写入该键，取消写空串） */
+  items?: () => Array<{ name?: string, desc?: string, status?: string, value?: string }>
   /** type=select 时的选项；传函数则每次渲染求值 */
   options?: Array<{ value: string, label: string }> | (() => Array<{ value: string, label: string }>)
   /** 控件右侧的附加文字（如「上次更新：…」）；传函数则每次渲染求值 */
