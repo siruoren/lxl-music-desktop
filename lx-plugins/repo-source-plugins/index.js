@@ -557,31 +557,29 @@ module.exports = {
             ],
           },
           {
-            type: 'select',
+            type: 'list',
             key: 'activeApiId',
-            label: '勾选音源',
-            options: () => {
+            label: '已导入的远程源（勾选即使用）',
+            items: () => {
               const userApi = bridge()
-              const current = userApi ? (userApi.getActiveId() || '') : ''
-              const opts = []
-              for (const item of state.sources) {
-                if (!item.apiId) continue
-                opts.push({
-                  value: item.apiId,
-                  label: (item.name || item.url) + (item.apiId === current ? '（当前勾选）' : ''),
-                })
-              }
-              return [{ value: '', label: '（不勾选，恢复使用内置音源）' }, ...opts]
+              let current = ''
+              try { current = userApi ? (userApi.getActiveId() || '') : '' } catch { current = '' }
+              return state.sources.map(item => ({
+                name: item.name || item.url,
+                desc: `${item.url}${item.version ? ` · v${item.version}` : ''}`,
+                status: `${item.apiId === current ? '已勾选 · ' : ''}${item.updatedAt ? `更新于 ${formatTime(item.updatedAt)}` : '导入时间未知'}`,
+                value: item.apiId || undefined,
+              }))
             },
             suffix: () => {
               const userApi = bridge()
               if (!userApi) return ''
               const current = userApi.getActiveId() || ''
-              if (!current) return '当前未勾选'
+              if (!current) return '当前未勾选，使用内置音源'
               const hit = state.sources.find(item => item.apiId === current)
               return hit ? `当前勾选：${hit.name || hit.url}` : '当前勾选：非本插件导入的源'
             },
-            tip: '选择后立即同步为「设置 → 基本设置 → 自定义源」的勾选；只列出本插件导入的远程源。在设置页手动改勾选后，这里会在下次启动或更新时校准显示。',
+            tip: '勾选任一音源立即同步为「设置 → 基本设置 → 自定义源」的勾选（单选，重新勾选即切换，取消勾选恢复内置音源）；列表文件里已去掉的地址不会被自动删除，可用上面的按钮整体移除。',
           },
           { type: 'divider' },
           {
@@ -595,17 +593,6 @@ module.exports = {
               return state.lastResult || '尚未执行'
             },
           },
-          {
-            type: 'list',
-            label: '已导入的远程源',
-            items: () => state.sources.map(item => ({
-              name: item.name || item.url,
-              desc: `${item.url}${item.version ? ` · v${item.version}` : ''}`,
-              status: item.updatedAt ? `更新于 ${formatTime(item.updatedAt)}` : '导入时间未知',
-            })),
-            tip: '列表文件里已去掉的地址不会被自动删除，可用上面的按钮整体移除。',
-          },
-          { type: 'divider' },
           {
             type: 'switch',
             key: 'dedupe',

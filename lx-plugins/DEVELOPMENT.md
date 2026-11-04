@@ -332,7 +332,7 @@ api.registerSettings({
 | `info` | 只读文本 | `text`（可传函数）、`suffix`（可传函数） |
 | `button` | 单个按钮（独占一行） | `label`、`action`、`disabled` |
 | `buttons` | **一行多个按钮** | `buttons: [{ label, action, disabled }]` |
-| `list` | 只读条目列表 | `label`、`items: () => [{ name, desc, status }]`、`tip` |
+| `list` | 条目列表；字段带 `key` 且条目带 `value` 时渲染**勾选框**（单选语义：勾选把 `value` 写入该键、取消写空串，并触发 `onConfigChange`），否则只读 | `label`、`items: () => [{ name, desc, status, value }]`、`tip` |
 | `select` | 下拉单选 | `key`、`options: () => [{ value, label }]`；**改动立即落盘**并触发 `onConfigChange` |
 | `divider` | 分隔线 | 无 |
 
