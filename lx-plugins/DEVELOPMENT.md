@@ -333,6 +333,7 @@ api.registerSettings({
 | `button` | 单个按钮（独占一行） | `label`、`action`、`disabled` |
 | `buttons` | **一行多个按钮** | `buttons: [{ label, action, disabled }]` |
 | `list` | 只读条目列表 | `label`、`items: () => [{ name, desc, status }]`、`tip` |
+| `select` | 下拉单选 | `key`、`options: () => [{ value, label }]`；**改动立即落盘**并触发 `onConfigChange` |
 | `divider` | 分隔线 | 无 |
 
 通用属性：`label`、`tip`（控件下方小字）、`suffix`（右侧附加文字）、`disabled`。

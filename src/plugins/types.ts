@@ -103,8 +103,8 @@ export interface PluginModule {
  */
 export interface PluginSettingField {
   /** 字段类型 */
-  type: 'switch' | 'text' | 'password' | 'number' | 'textarea' | 'info' | 'button' | 'buttons' | 'list' | 'divider'
-  /** 配置键（switch / text / password / number / textarea 必填） */
+  type: 'switch' | 'text' | 'password' | 'number' | 'textarea' | 'info' | 'button' | 'buttons' | 'list' | 'select' | 'divider'
+  /** 配置键（switch / text / password / number / textarea / select 必填） */
   key?: string
   /** 展示名称 */
   label?: string
@@ -127,6 +127,8 @@ export interface PluginSettingField {
   text?: string | (() => string)
   /** type=list 时的条目；传函数则每次渲染求值 */
   items?: () => Array<{ name?: string, desc?: string, status?: string }>
+  /** type=select 时的选项；传函数则每次渲染求值 */
+  options?: Array<{ value: string, label: string }> | (() => Array<{ value: string, label: string }>)
   /** 控件右侧的附加文字（如「上次更新：…」）；传函数则每次渲染求值 */
   suffix?: string | (() => string)
 }
