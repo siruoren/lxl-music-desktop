@@ -6,6 +6,7 @@
  *      列表文件是纯文本，每行一个自定义源 js 的地址（以 # 或 // 开头的行会被忽略）。
  *   2. 点「立即导入 / 更新」即从列表文件里逐行取出 js 地址并批量导入到客户端的
  *      「自定义源」中 —— 因此它们会出现在 设置 → 基本设置 → 自定义源 列表里，可以勾选。
+ *      在线脚本支持普通 JS 和 Base64 文本，下载后会自动识别并解码。
  *   3. 每次启动客户端都会在**后台异步**更新已导入的源（不阻塞界面，无需手动操作），
  *      更新结果会显示在插件设置面板里。
  *   4. 已导入的源记录在本插件自己的账本里，配置与账本都保存在**插件目录**的
@@ -102,6 +103,24 @@ function readScriptInfo(script, key) {
   const rxp = new RegExp(`^\\s*\\*\\s?@${key}\\s+(.+)$`, 'm')
   const m = rxp.exec(block[0])
   return m ? m[1].trim() : ''
+}
+
+/** 普通 JS 原样返回；若内容是 Base64 文本，则解码为带脚本头的 JS。 */
+function decodeScriptContent(content) {
+  const script = String(content)
+  const hasScriptHeader = text => /^\/\*[\s\S]+?\*\//.test(text.replace(/^\uFEFF/, ''))
+  if (hasScriptHeader(script)) return script
+
+  const encoded = script.replace(/^\uFEFF/, '').replace(/\s/g, '')
+  if (!encoded || encoded.length % 4 === 1 || !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) return script
+
+  const padded = encoded + '='.repeat((4 - encoded.length % 4) % 4)
+  const bytes = Buffer.from(padded, 'base64')
+  if (bytes.toString('base64').replace(/=+$/, '') !== encoded.replace(/=+$/, '')) return script
+
+  const decoded = bytes.toString('utf8')
+  if (!Buffer.from(decoded, 'utf8').equals(bytes) || !hasScriptHeader(decoded)) return script
+  return decoded
 }
 
 /** 解析列表文件：每行一个地址，忽略空行与 # / // 注释行 */
@@ -321,8 +340,9 @@ module.exports = {
           remaining.delete(url)
           const prev = prevMap.get(url)
           try {
-            const script = await fetchText(url, 5)
+            const downloaded = await fetchText(url, 5)
             if (currentRun.cancelled) break
+            const script = decodeScriptContent(downloaded)
             if (!script.trim()) throw new Error('下载到的文件为空')
             if (!/^\/\*[\s\S]+?\*\//.test(script.replace(/^\uFEFF/, ''))) {
               throw new Error('不是有效的自定义源脚本（缺少文件头注释块）')
