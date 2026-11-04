@@ -52,6 +52,19 @@
           <span v-if="field.tip" :class="$style.tip">{{ field.tip }}</span>
         </label>
 
+        <!-- select 是下拉单选：options 可传函数，每次渲染求值（如实时音源列表） -->
+        <div v-else-if="field.type === 'select'" :class="$style.field">
+          <span :class="$style.label">{{ field.label }}</span>
+          <select
+            :class="$style.input" :value="valueOf(field)" :disabled="busy || field.disabled"
+            @change="onChange(field, $event.target.value)"
+          >
+            <option v-for="(opt, i) in optionsOf(field)" :key="i" :value="opt.value">{{ opt.label }}</option>
+          </select>
+          <span v-if="suffixOf(field)" :class="$style.suffix">{{ suffixOf(field) }}</span>
+          <span v-if="field.tip" :class="$style.tip">{{ field.tip }}</span>
+        </div>
+
         <div v-else-if="field.type === 'textarea'" :class="$style.field">
           <span :class="$style.label">{{ field.label }}</span>
           <textarea
@@ -156,6 +169,11 @@ export default {
       void tick.value
       if (typeof field.items !== 'function') return []
       try { return field.items() || [] } catch { return [] }
+    }
+    const optionsOf = field => {
+      void tick.value
+      const opts = typeof field.options === 'function' ? field.options() : field.options
+      return Array.isArray(opts) ? opts : []
     }
     const valueOf = field => {
       void tick.value
@@ -297,6 +315,7 @@ export default {
       textOf,
       suffixOf,
       itemsOf,
+      optionsOf,
       valueOf,
       inputType,
       buttonsOf,

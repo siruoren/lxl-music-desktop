@@ -54,6 +54,8 @@ const DEFAULT_CONFIG = {
   lastResult: '',
   /** 已导入的远程源账本：[{ url, apiId, name, version, hash, updatedAt }] */
   sources: [],
+  /** 面板「勾选音源」下拉框的值（自定义源 id）；与「设置 → 自定义源」的勾选双向同步 */
+  activeApiId: '',
 }
 
 /** setup 时写入，供 module 上的生命周期回调使用 */
@@ -257,7 +259,19 @@ module.exports = {
         lastUpdateAt: state.lastUpdateAt,
         lastResult: state.lastResult,
         sources: state.sources,
+        activeApiId: state.activeApiId,
       })
+    }
+
+    /** 把「设置 → 自定义源」的真实勾选读进内存，供面板下拉框显示（随 persist 落盘） */
+    const syncActiveFromUserApi = () => {
+      const userApi = bridge()
+      if (!userApi) return
+      try {
+        state.activeApiId = userApi.getActiveId() || ''
+      } catch (err) {
+        api.logger.warn('读取自定义源勾选状态失败：', err)
+      }
     }
 
     // 启动时清理「上次更新进行中被强杀」留下的瞬时状态（旧版本会把“正在更新…”写进 config.json），
@@ -478,6 +492,8 @@ module.exports = {
         running = false
         currentRun = null
         api.setRuntime({ processing: false })
+        // 更新会重建被覆盖的源（id 会变）或移除失效源，勾选状态可能已变，重新校准面板显示
+        syncActiveFromUserApi()
         persist()
       }
     }
@@ -506,6 +522,7 @@ module.exports = {
       } catch (err) {
         state.lastResult = `移除失败：${err.message}`
       }
+      syncActiveFromUserApi()
       persist()
     }
 
@@ -538,6 +555,33 @@ module.exports = {
               { label: '立即导入 / 更新', action: 'update' },
               { label: '移除本插件导入的全部源', action: 'removeAll' },
             ],
+          },
+          {
+            type: 'select',
+            key: 'activeApiId',
+            label: '勾选音源',
+            options: () => {
+              const userApi = bridge()
+              const current = userApi ? (userApi.getActiveId() || '') : ''
+              const opts = []
+              for (const item of state.sources) {
+                if (!item.apiId) continue
+                opts.push({
+                  value: item.apiId,
+                  label: (item.name || item.url) + (item.apiId === current ? '（当前勾选）' : ''),
+                })
+              }
+              return [{ value: '', label: '（不勾选，恢复使用内置音源）' }, ...opts]
+            },
+            suffix: () => {
+              const userApi = bridge()
+              if (!userApi) return ''
+              const current = userApi.getActiveId() || ''
+              if (!current) return '当前未勾选'
+              const hit = state.sources.find(item => item.apiId === current)
+              return hit ? `当前勾选：${hit.name || hit.url}` : '当前勾选：非本插件导入的源'
+            },
+            tip: '选择后立即同步为「设置 → 基本设置 → 自定义源」的勾选；只列出本插件导入的远程源。在设置页手动改勾选后，这里会在下次启动或更新时校准显示。',
           },
           { type: 'divider' },
           {
@@ -594,6 +638,9 @@ module.exports = {
 
     /* ---------- 启动时自动更新 ---------- */
     api.hooks.on('app:ready', () => {
+      // 启动后先按「设置 → 自定义源」的真实勾选校准面板下拉框（config.json 里可能已过期）
+      syncActiveFromUserApi()
+      persist()
       api.logger.info(
         `已就绪：v${api.version}，已导入 ${state.sources.length} 个远程源；` +
         `上次更新 ${formatTime(state.lastUpdateAt)}`,
@@ -619,6 +666,25 @@ module.exports = {
     // 面板改的键直接同步进内存状态（配置实体由宿主写入插件目录的 config.json）
     for (const key of Object.keys(DEFAULT_CONFIG)) {
       if (key in next) ctx.state[key] = next[key]
+    }
+    // 面板下拉框勾选了音源 → 同步为「设置 → 自定义源」的勾选。
+    // 仅在真实勾选与面板值不一致时才调 setActiveId，避免无谓重写；本身不会回环
+    // （插件自身 api.setConfig 不会触发 onConfigChange，只有面板写入才会）。
+    if ('activeApiId' in next) {
+      const { api, state } = ctx
+      const plugins = api.app && api.app.plugins
+      const userApi = (plugins && plugins.userApi) || null
+      if (userApi) {
+        let current = ''
+        try { current = userApi.getActiveId() || '' } catch { current = '' }
+        if ((next.activeApiId || '') !== current) {
+          try {
+            userApi.setActiveId(next.activeApiId || '')
+          } catch (err) {
+            api.logger.warn('同步自定义源勾选失败：', err)
+          }
+        }
+      }
     }
     return undefined
   },
