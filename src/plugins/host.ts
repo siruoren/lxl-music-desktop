@@ -8,7 +8,7 @@
  */
 import { type PatchManager } from './patch'
 import { type HookBus } from './hookBus'
-import type { PluginApi, PluginPlatform, PluginSettingsSpec, RendererPluginApi } from './types'
+import type { DefaultFavoriteHandler, PluginApi, PluginPlatform, PluginSettingsSpec, RendererPluginApi } from './types'
 
 export interface HostContext {
   platform: PluginPlatform
@@ -39,6 +39,8 @@ export interface HostContext {
   setTouchBar?: (pluginId: string, touchBar: any) => void
   /** 向 renderer 发送播放控制指令（仅 main 端提供，委托 winBridge.controlPlayer） */
   controlPlayer?: (pluginId: string, action: LX.Player.StatusButtonActions, data?: any) => void
+  /** 注册「默认收藏」处理器（仅 renderer 端提供）；传 null 撤销该插件的处理器 */
+  registerDefaultFavorite?: (pluginId: string, handler: DefaultFavoriteHandler | null) => void
 }
 
 export interface PatchRecord {
@@ -210,6 +212,15 @@ export function createPluginApi(
   // 向 renderer 发送播放控制指令（仅 main 端，action 同 taskbar 按钮）
   if (ctx.controlPlayer) {
     api.controlPlayer = (action: LX.Player.StatusButtonActions, data?: any) => { ctx.controlPlayer!(pluginId, action, data) }
+  }
+
+  // 「默认收藏」接管（仅 renderer 端）：注册后客户端所有收藏按钮直接交给插件处理（不弹列表选择框）。
+  // 卸载/禁用插件时 disposeApi 会执行 disposers 自动撤销，客户端恢复原弹窗行为。
+  if (ctx.registerDefaultFavorite) {
+    api.setDefaultFavoriteHandler = (handler: DefaultFavoriteHandler | null) => {
+      ctx.registerDefaultFavorite!(pluginId, handler ?? null)
+      disposers.push(() => { ctx.registerDefaultFavorite!(pluginId, null) })
+    }
   }
 
   // 供卸载时回退使用

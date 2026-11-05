@@ -21,12 +21,13 @@
  *    components/layout/Icons.vue 的 `#icon-plugin` 图标；页面体为 src/plugins/ui/Plugins.vue（内容 SettingPlugins.vue）
  */
 import { ipcRenderer } from 'electron'
+import { watch } from 'vue'
 import musicSdk from '@renderer/utils/musicSdk'
 import { userApi } from '@renderer/store'
 import { appSetting, setApiSource } from '@renderer/store/setting'
 import { getUserApiList, importUserApi, removeUserApi } from '@renderer/utils/ipc'
 // === Plugin Manager === 收藏数据桥：让插件能读取/写回「我的列表」（收藏）
-import { getListMusics, overwriteListFull } from '@renderer/store/list/action'
+import { getListMusics, overwriteListFull, addListMusics, createUserList } from '@renderer/store/list/action'
 import { defaultList, loveList, userLists } from '@renderer/store/list/state'
 import { fixNewMusicInfoQuality, filterMusicList } from '@renderer/utils'
 import { toRaw } from '@common/utils/vueTools'
@@ -35,6 +36,7 @@ import { HookBus } from './hookBus'
 import { PatchManager } from './patch'
 import { createPluginApi, getPatchRecords, disposeApi, runShutdown } from './host'
 import type { HostContext } from './host'
+import { setDefaultFavoriteHandler } from './defaultFavorite'
 import { evaluatePluginModule } from './loader'
 import type { ModuleRequire } from './loader'
 import { PLUGIN_IPC } from './ipc'
@@ -221,6 +223,15 @@ const userApiBridge = {
   setActiveId: (id: string): void => {
     setApiSource(id)
   },
+  /**
+   * 订阅「自定义源勾选」变化（含用户在设置页手动切换 / 导入时自动切换），返回取消订阅函数。
+   * 供插件实时校准自身设置面板的勾选显示（初始化状态跟随 app 实际勾选）。
+   */
+  subscribeActiveChange: (listener: (id: string) => void): (() => void) => {
+    return watch(() => appSetting['common.apiSource'], (val) => {
+      try { listener(val || '') } catch (err) { console.warn('[plugins] active change listener error:', err) }
+    })
+  },
 }
 
 /* ===================== 收藏（我的列表）数据桥 =====================
@@ -259,6 +270,21 @@ const listDataBridge = {
       }
     }
     return lists
+  },
+  /** 获取用户列表元信息（id/name 等，不含歌曲），供插件查重（如「我的喜欢」是否已存在） */
+  getUserLists: async(): Promise<any[]> => toRaw(userLists).map(l => ({ ...toRaw(l) })),
+  /** 创建用户列表（追加到「我的列表」末尾；不查重，调用方自行确保不与现有列表冲突） */
+  createUserList: async(info: { id?: string, name?: string, source?: any, sourceListId?: string }): Promise<void> => {
+    await createUserList(info)
+  },
+  /** 向指定列表批量添加歌曲（主进程按歌曲 id 去重；兼容带 progress 的下载项包装对象） */
+  addMusics: async(listId: string, musicInfos: any[]): Promise<void> => {
+    const arr = Array.isArray(musicInfos) ? musicInfos : []
+    if (!arr.length) return
+    const list = (arr[0] && typeof arr[0] === 'object' && 'progress' in arr[0])
+      ? arr.map(t => t.metadata?.musicInfo ?? t).filter(Boolean)
+      : arr
+    await addListMusics(listId, filterMusicList(list).map(m => fixNewMusicInfoQuality(m)))
   },
   /** 写回列表：按 id 匹配覆盖、本地不存在则新增（与导入 v2 备份同语义）。
    *  scope 未包含的类别会读回当前内容保持原样，避免 overwriteListFull 整体覆盖时误清空。 */
@@ -440,6 +466,7 @@ export async function initUserPlugins(_app?: any): Promise<void> {
     getConfig: getConfigOf,
     setConfig: setConfigOf,
     registerSettings,
+    registerDefaultFavorite: setDefaultFavoriteHandler,
   }
 
   // 暴露给源码扩展点与插件
