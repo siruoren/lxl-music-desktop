@@ -25,6 +25,7 @@ import { ref } from '@common/utils/vueTools'
 import useToggleDesktopLyric from '@renderer/utils/compositions/useToggleDesktopLyric'
 import { musicInfo, playMusicInfo } from '@renderer/store/player/state'
 import { appSetting } from '@renderer/store/setting'
+import { handleDefaultFavorite } from '@root/plugins/defaultFavorite'
 
 export default {
   setup() {
@@ -34,8 +35,11 @@ export default {
       toggleDesktopLyric,
       toggleLockDesktopLyric,
     } = useToggleDesktopLyric()
+    // 安装「默认收藏」插件后直接添加到「我的喜欢」，否则弹窗选择列表
     const addMusicTo = () => {
-      if (!musicInfo.id) return
+      if (!musicInfo.id || !playMusicInfo.musicInfo) return
+      const currentMusicInfo = 'progress' in playMusicInfo.musicInfo ? playMusicInfo.musicInfo.metadata.musicInfo : playMusicInfo.musicInfo
+      if (handleDefaultFavorite([currentMusicInfo])) return
       isShowAddMusicTo.value = true
     }
     return {

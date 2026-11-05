@@ -28,6 +28,7 @@ lx-plugins/
 ├── repo-source-plugins/          音乐源增强（远程自定义源批量导入 + 同源去重）
 ├── sock_proxy/                   SOCKS5 代理（含 Chromium 会话层，让播放也走代理）
 ├── sync-favorites/               我的列表同步（WebDAV / FTP / SMB）
+├── default-favorite/             默认收藏：创建/复用「我的喜欢」，收藏按钮免弹窗直加
 └── <任意插件项目>/               一个子目录 = 一个插件项目（目录名 = 插件 id / 名称 / 产物名）
     ├── plugin.json               插件清单
     ├── index.js                  插件入口（CommonJS）
@@ -44,6 +45,7 @@ lx-plugins/
 | `repo-source-plugins` | 远程自定义源批量导入与自动更新；搜索结果同源去重（可开关） | renderer | [README](./repo-source-plugins/README.md) |
 | `sock_proxy` | 为客户端提供 SOCKS5 代理，同时接管 Node 请求层与 Chromium 会话层 | main + renderer | [index.js](./sock_proxy/index.js)（详见[「代理为什么有两层」](#代理为什么有两层重要)） |
 | `sync-favorites` | 我的列表 / 收藏同步到 WebDAV / FTP / SMB，支持定时、加密、还原 | renderer | [README](./sync-favorites/README.md) |
+| `default-favorite` | 默认收藏：在「我的列表」创建（或复用已有的）「我的喜欢」，所有收藏按钮默认直加、不弹窗；卸载不删列表 | renderer | [README](./default-favorite/README.md) |
 
 ## 构建
 

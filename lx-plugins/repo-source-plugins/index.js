@@ -294,6 +294,19 @@ module.exports = {
       return (plugins && plugins.userApi) || null
     }
 
+    // 订阅「设置 → 自定义源」勾选变化（含设置页手动切换、导入时自动切换）：
+    // 实时把真实勾选同步进配置，让面板的勾选框初始化/跟随 app 的实际状态。
+    // persist 走 api.setConfig（不会触发 onConfigChange），无回环。
+    {
+      const userApi = bridge()
+      if (userApi && typeof userApi.subscribeActiveChange === 'function') {
+        userApi.subscribeActiveChange(() => {
+          syncActiveFromUserApi()
+          persist()
+        })
+      }
+    }
+
     /**
      * 导入 / 更新列表文件里的全部远程源。
      * 匹配规则：按「源名称」（脚本头 @name，与本地「自定义源」列表条目名一致）比对 ——

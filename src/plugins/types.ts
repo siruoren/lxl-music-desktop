@@ -151,6 +151,9 @@ export interface PluginSettingsSpec {
   fields: PluginSettingField[]
 }
 
+/** 「默认收藏」处理器：接收客户端收藏按钮提交的歌曲（已归一化为 MusicInfo） */
+export type DefaultFavoriteHandler = (musicInfos: LX.Music.MusicInfo[]) => void
+
 /**
  * 提供给插件的 API（host 端根据进程注入不同能力）。
  * 这是插件“覆盖/修改原代码功能”的主要手段：
@@ -242,6 +245,12 @@ export interface RendererPluginApi extends PluginApi {
   registerMusicSource: (id: string, name: string, module: any) => void
   /** 注销音乐源 */
   unregisterMusicSource: (id: string) => void
+  /**
+   * 注册「默认收藏」处理器（**仅 renderer 端可用**）。
+   * 注册后客户端所有「收藏」按钮会把歌曲直接交给该处理器（不弹列表选择框）；
+   * 插件卸载/禁用时宿主自动撤销，客户端恢复弹窗行为。传 null 可主动撤销。
+   */
+  setDefaultFavoriteHandler: (handler: DefaultFavoriteHandler | null) => void
   /**
    * 注册本插件的设置面板，会出现在插件管理页（侧边栏「插件管理」）中该插件的「设置」按钮里。
    * 面板上的字段用声明式描述，由宿主渲染，插件无需自带 Vue 组件。
