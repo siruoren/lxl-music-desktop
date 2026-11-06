@@ -2,6 +2,7 @@ import { computed, ref, shallowReactive, reactive, nextTick } from '@common/util
 import musicSdk from '@renderer/utils/musicSdk'
 import { useI18n } from '@renderer/plugins/i18n'
 import { DOWNLOAD_STATUS } from '@common/constants'
+import { hasDefaultFavoriteHandler } from '@root/plugins/defaultFavorite'
 
 export default ({
   handleStartTask,
@@ -11,6 +12,7 @@ export default ({
   handlePlayMusic,
   handlePlayMusicLater,
   handleShowMusicAddModal,
+  handleLikeMusic,
   handleSearch,
   handleOpenMusicDetail,
 }) => {
@@ -56,6 +58,13 @@ export default ({
         action: 'file',
         hide: !itemMenuControl.file,
       },
+      // 「喜欢」菜单（由「默认收藏」插件注册后显示），位于「收藏」上方
+      ...(hasDefaultFavoriteHandler.value
+        ? [{
+            name: t('list__like'),
+            action: 'like',
+          }]
+        : []),
       {
         name: t('list__add_to'),
         action: 'addTo',
@@ -135,6 +144,9 @@ export default ({
         break
       case 'playLater':
         handlePlayMusicLater(index)
+        break
+      case 'like':
+        handleLikeMusic(index)
         break
       case 'addTo':
         handleShowMusicAddModal(index)

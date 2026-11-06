@@ -9,20 +9,7 @@ export default ({ selectedList, list }) => {
   const selectedAddMusicInfo = ref(null)
 
   const handleShowMusicAddModal = (index, single) => {
-    let musicInfos
-    let isMultiple = false
     if (selectedList.value.length && !single) {
-      musicInfos = selectedList.value
-      isMultiple = true
-    } else {
-      musicInfos = [list.value[index]]
-    }
-    // 安装「默认收藏」插件后直接添加到「我的喜欢」，不再弹窗选择列表
-    if (handleDefaultFavorite(musicInfos)) {
-      if (isMultiple) selectedList.value = []
-      return
-    }
-    if (isMultiple) {
       isMoveMultiple.value = false
       isShowListAddMultiple.value = true
     } else {
@@ -47,6 +34,16 @@ export default ({ selectedList, list }) => {
     }
   }
 
+  // 「喜欢」菜单（由「默认收藏」插件注册显示）：直接添加到「我的喜欢」，不弹窗
+  const handleLikeMusic = (index, single) => {
+    if (selectedList.value.length && !single) {
+      handleDefaultFavorite(selectedList.value)
+      selectedList.value = []
+    } else {
+      handleDefaultFavorite([list.value[index]])
+    }
+  }
+
   return {
     isShowListAdd,
     isMove,
@@ -55,5 +52,6 @@ export default ({ selectedList, list }) => {
     selectedAddMusicInfo,
     handleShowMusicAddModal,
     handleShowMusicMoveModal,
+    handleLikeMusic,
   }
 }

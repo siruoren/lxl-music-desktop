@@ -151,7 +151,7 @@ export interface PluginSettingsSpec {
   fields: PluginSettingField[]
 }
 
-/** 「默认收藏」处理器：接收客户端收藏按钮提交的歌曲（已归一化为 MusicInfo） */
+/** 「喜欢」处理器：接收客户端「喜欢」菜单提交的歌曲（已归一化为 MusicInfo） */
 export type DefaultFavoriteHandler = (musicInfos: LX.Music.MusicInfo[]) => void
 
 /**
@@ -246,9 +246,10 @@ export interface RendererPluginApi extends PluginApi {
   /** 注销音乐源 */
   unregisterMusicSource: (id: string) => void
   /**
-   * 注册「默认收藏」处理器（**仅 renderer 端可用**）。
-   * 注册后客户端所有「收藏」按钮会把歌曲直接交给该处理器（不弹列表选择框）；
-   * 插件卸载/禁用时宿主自动撤销，客户端恢复弹窗行为。传 null 可主动撤销。
+   * 注册「喜欢」处理器（**仅 renderer 端可用**）。
+   * 注册后客户端在歌曲右键菜单「收藏」上方显示「喜欢」菜单项，点击后把歌曲（单曲/多选）
+   * 直接交给该处理器（默认加入「我的喜欢」，不弹列表选择框）；原有「收藏」功能不变。
+   * 插件卸载/禁用时宿主自动撤销（菜单项同时隐藏）。传 null 可主动撤销。
    */
   setDefaultFavoriteHandler: (handler: DefaultFavoriteHandler | null) => void
   /**

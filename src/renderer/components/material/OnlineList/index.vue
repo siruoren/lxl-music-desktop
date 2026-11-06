@@ -168,6 +168,7 @@ export default {
       isShowListAddMultiple,
       selectedAddMusicInfo,
       handleShowMusicAddModal,
+      handleLikeMusic,
     } = useMusicAdd({ selectedList, props })
 
     const {
@@ -199,6 +200,7 @@ export default {
       handlePlayMusicLater,
       handleSearch,
       handleShowMusicAddModal,
+      handleLikeMusic,
       handleOpenMusicDetail,
       handleDislikeMusic,
     })

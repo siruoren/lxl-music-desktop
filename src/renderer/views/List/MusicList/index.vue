@@ -184,6 +184,7 @@ export default {
       selectedAddMusicInfo,
       handleShowMusicAddModal,
       handleShowMusicMoveModal,
+      handleLikeMusic,
     } = useMusicAdd({ selectedList, list })
 
     const {
@@ -233,6 +234,7 @@ export default {
       handleSearch,
       handleShowMusicAddModal,
       handleShowMusicMoveModal,
+      handleLikeMusic,
       handleShowSortModal,
       handleOpenMusicDetail,
       handleCopyName,
