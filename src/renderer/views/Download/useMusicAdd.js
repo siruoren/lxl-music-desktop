@@ -7,20 +7,7 @@ export default ({ selectedList, list }) => {
   const selectedAddMusicInfo = shallowRef(null)
 
   const handleShowMusicAddModal = (index, single) => {
-    let musicInfos
-    let isMultiple = false
     if (selectedList.value.length && !single) {
-      musicInfos = selectedList.value
-      isMultiple = true
-    } else {
-      musicInfos = [list.value[index].metadata.musicInfo]
-    }
-    // 安装「默认收藏」插件后直接添加到「我的喜欢」，不再弹窗选择列表
-    if (handleDefaultFavorite(musicInfos)) {
-      if (isMultiple) selectedList.value = []
-      return
-    }
-    if (isMultiple) {
       isShowListAddMultiple.value = true
     } else {
       selectedAddMusicInfo.value = markRaw(list.value[index].metadata.musicInfo)
@@ -30,10 +17,22 @@ export default ({ selectedList, list }) => {
     }
   }
 
+  // 「喜欢」菜单（由「默认收藏」插件注册显示）：直接添加到「我的喜欢」，不弹窗
+  const handleLikeMusic = (index, single) => {
+    if (selectedList.value.length && !single) {
+      // 下载项为带 progress 的包装对象，宿主 addMusics 内部会解包
+      handleDefaultFavorite(selectedList.value)
+      selectedList.value = []
+    } else {
+      handleDefaultFavorite([list.value[index].metadata.musicInfo])
+    }
+  }
+
   return {
     isShowListAdd,
     isShowListAddMultiple,
     selectedAddMusicInfo,
     handleShowMusicAddModal,
+    handleLikeMusic,
   }
 }

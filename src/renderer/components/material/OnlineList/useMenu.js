@@ -2,6 +2,7 @@ import { computed, ref, reactive, nextTick } from '@common/utils/vueTools'
 import musicSdk from '@renderer/utils/musicSdk'
 import { useI18n } from '@renderer/plugins/i18n'
 import { hasDislike } from '@renderer/core/dislikeList'
+import { hasDefaultFavoriteHandler } from '@root/plugins/defaultFavorite'
 
 export default ({
   props,
@@ -13,6 +14,7 @@ export default ({
   handlePlayMusicLater,
   handleSearch,
   handleShowMusicAddModal,
+  handleLikeMusic,
   handleOpenMusicDetail,
   handleDislikeMusic,
 }) => {
@@ -51,6 +53,13 @@ export default ({
         action: 'search',
         disabled: !itemMenuControl.search,
       },
+      // 「喜欢」菜单（由「默认收藏」插件注册后显示），位于「收藏」上方
+      ...(hasDefaultFavoriteHandler.value
+        ? [{
+            name: t('list__like'),
+            action: 'like',
+          }]
+        : []),
       {
         name: t('list__add_to'),
         action: 'addTo',
@@ -114,6 +123,9 @@ export default ({
         break
       case 'search':
         handleSearch(index)
+        break
+      case 'like':
+        handleLikeMusic(index)
         break
       case 'addTo':
         handleShowMusicAddModal(index)

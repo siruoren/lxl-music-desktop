@@ -39,7 +39,7 @@ export interface HostContext {
   setTouchBar?: (pluginId: string, touchBar: any) => void
   /** 向 renderer 发送播放控制指令（仅 main 端提供，委托 winBridge.controlPlayer） */
   controlPlayer?: (pluginId: string, action: LX.Player.StatusButtonActions, data?: any) => void
-  /** 注册「默认收藏」处理器（仅 renderer 端提供）；传 null 撤销该插件的处理器 */
+  /** 注册「喜欢」菜单处理器（仅 renderer 端提供）；传 null 撤销该插件的处理器 */
   registerDefaultFavorite?: (pluginId: string, handler: DefaultFavoriteHandler | null) => void
 }
 
@@ -214,8 +214,8 @@ export function createPluginApi(
     api.controlPlayer = (action: LX.Player.StatusButtonActions, data?: any) => { ctx.controlPlayer!(pluginId, action, data) }
   }
 
-  // 「默认收藏」接管（仅 renderer 端）：注册后客户端所有收藏按钮直接交给插件处理（不弹列表选择框）。
-  // 卸载/禁用插件时 disposeApi 会执行 disposers 自动撤销，客户端恢复原弹窗行为。
+  // 「喜欢」菜单扩展（仅 renderer 端）：插件注册后客户端在右键菜单「收藏」上方显示「喜欢」项，
+  // 点击直接把歌曲交给插件处理（不弹窗）。卸载/禁用插件时 disposeApi 自动撤销，菜单项随之隐藏。
   if (ctx.registerDefaultFavorite) {
     api.setDefaultFavoriteHandler = (handler: DefaultFavoriteHandler | null) => {
       ctx.registerDefaultFavorite!(pluginId, handler ?? null)

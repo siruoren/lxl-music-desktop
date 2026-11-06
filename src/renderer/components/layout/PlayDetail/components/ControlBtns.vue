@@ -18,7 +18,7 @@ div(:class="$style.footerLeftControlBtns")
   common-playback-rate-btn
   common-volume-btn
   common-toggle-play-mode-btn
-  button(:class="$style.footerLeftControlBtn" :aria-label="$t('player__add_music_to')" @click="addMusicTo")
+  button(:class="$style.footerLeftControlBtn" :aria-label="$t('player__add_music_to')" @click="isShowAddMusicTo = true")
     svg(version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" space="preserve")
       use(xlink:href="#icon-add-2")
   common-list-add-modal(v-model:show="isShowAddMusicTo" :music-info="playMusicInfo.musicInfo")
@@ -33,7 +33,6 @@ import {
   isShowLrcSelectContent,
   isShowPlayComment,
   playMusicInfo,
-  musicInfo,
 } from '@renderer/store/player/state'
 import {
   setShowPlayLrcSelectContentLrc,
@@ -45,7 +44,6 @@ import useToggleDesktopLyric from '@renderer/utils/compositions/useToggleDesktop
 import { dialog } from '@renderer/plugins/Dialog'
 import { setMediaDeviceId } from '@renderer/plugins/player'
 import { appSetting, saveMediaDeviceId, setEnableAudioVisualization } from '@renderer/store/setting'
-import { handleDefaultFavorite } from '@root/plugins/defaultFavorite'
 
 export default {
   setup() {
@@ -71,14 +69,7 @@ export default {
       toggleLockDesktopLyric,
     } = useToggleDesktopLyric()
 
-    // 安装「默认收藏」插件后直接添加到「我的喜欢」，否则弹窗选择列表
     const isShowAddMusicTo = ref(false)
-    const addMusicTo = () => {
-      if (!musicInfo.id || !playMusicInfo.musicInfo) return
-      const currentMusicInfo = 'progress' in playMusicInfo.musicInfo ? playMusicInfo.musicInfo.metadata.musicInfo : playMusicInfo.musicInfo
-      if (handleDefaultFavorite([currentMusicInfo])) return
-      isShowAddMusicTo.value = true
-    }
 
     const toggleAudioVisualization = async() => {
       const newSetting = !appSetting['player.audioVisualization']
@@ -108,7 +99,6 @@ export default {
       toggleLockDesktopLyric,
       toggleAudioVisualization,
       isShowAddMusicTo,
-      addMusicTo,
       playMusicInfo,
     }
   },

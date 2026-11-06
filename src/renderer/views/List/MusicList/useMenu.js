@@ -2,6 +2,7 @@ import { computed, ref, shallowReactive, reactive, nextTick } from '@common/util
 import musicSdk from '@renderer/utils/musicSdk'
 import { useI18n } from '@renderer/plugins/i18n'
 import { hasDislike } from '@renderer/core/dislikeList'
+import { hasDefaultFavoriteHandler } from '@root/plugins/defaultFavorite'
 
 export default ({
   assertApiSupport,
@@ -14,6 +15,7 @@ export default ({
   handleShowMusicToggleModal,
   handleShowMusicAddModal,
   handleShowMusicMoveModal,
+  handleLikeMusic,
   handleShowSortModal,
   handleOpenMusicDetail,
   handleCopyName,
@@ -55,6 +57,13 @@ export default ({
         action: 'playLater',
         disabled: !itemMenuControl.playLater,
       },
+      // 「喜欢」菜单（由「默认收藏」插件注册后显示），位于「收藏」上方
+      ...(hasDefaultFavoriteHandler.value
+        ? [{
+            name: t('list__like'),
+            action: 'like',
+          }]
+        : []),
       {
         name: t('list__add_to'),
         action: 'addTo',
@@ -139,6 +148,9 @@ export default ({
         break
       case 'copyName':
         handleCopyName(index)
+        break
+      case 'like':
+        handleLikeMusic(index)
         break
       case 'addTo':
         handleShowMusicAddModal(index)
