@@ -62,8 +62,8 @@ function persist(): void {
  * 记录某歌曲本次播放使用的音频地址（播放地址解析成功后由播放层调用）。
  * 播放结束登记「已缓存完成」时取该地址写入登记表。
  */
-export const setCurrentMusicUrl = (musicInfo: LX.Music.MusicInfo | null, url: string): void => {
-  if (!musicInfo || !url || 'progress' in musicInfo || musicInfo.source == 'local') return
+export const setCurrentMusicUrl = (musicInfo: LX.Music.MusicInfo | LX.Download.ListItem | null, url: string): void => {
+  if (!musicInfo || 'progress' in musicInfo || musicInfo.source == 'local') return
   currentUrls.set(musicInfo.id, url)
 }
 
@@ -71,7 +71,7 @@ export const setCurrentMusicUrl = (musicInfo: LX.Music.MusicInfo | null, url: st
  * 登记一首已缓存完成的歌曲（在线歌曲完整播放结束时由播放器调用）。
  * 按 id 幂等；重复登记不重复通知插件（地址有变化时更新地址并通知）。
  */
-export const addCachedMusic = async(musicInfo: LX.Music.MusicInfo | null): Promise<void> => {
+export const addCachedMusic = async(musicInfo: LX.Music.MusicInfo | LX.Download.ListItem | null): Promise<void> => {
   if (!musicInfo || 'progress' in musicInfo || musicInfo.source == 'local') return
   await ensureInit()
   const url = currentUrls.get(musicInfo.id) ?? ''
