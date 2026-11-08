@@ -98,6 +98,7 @@ const getMusicPlayUrl = async(musicInfo: LX.Music.MusicInfo | LX.Download.ListIt
   // 离线化播放：取播放地址需要联网时，若 2 秒内未返回（超时或失败），回退使用
   // 已缓存歌曲登记的地址 —— 该地址对应的音频已完整进入资源缓存，可离线播放。
   // 仅对在线歌曲生效（下载项/本地文件已有本地优先逻辑）。
+  // eslint-disable-next-line @typescript-eslint/promise-function-async
   const fetchUrl = () => {
     let promise = (toggleMusicInfo ? getMusicUrl({
       musicInfo: toggleMusicInfo,
@@ -116,7 +117,7 @@ const getMusicPlayUrl = async(musicInfo: LX.Music.MusicInfo | LX.Download.ListIt
     if (!('progress' in musicInfo) && musicInfo.source != 'local') {
       promise = Promise.race([
         promise,
-        new Promise<never>((_, reject) => { setTimeout(() => { reject(new Error('get url timeout')) }, 2000) }),
+        new Promise<never>((_resolve, reject) => { setTimeout(() => { reject(new Error('get url timeout')) }, 2000) }),
       ]).catch(async(err: any) => {
         if (err?.message != 'get url timeout') throw err
         // 2 秒超时：有已缓存音频则直接用其地址播放；否则继续等待原请求结果
