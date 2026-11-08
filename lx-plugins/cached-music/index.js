@@ -108,14 +108,20 @@ function scheduleSync() {
 
 /**
  * 确保「缓存列表」位于「我的列表」最上面（position 0）。
- * 旧版本安装时建在末尾的列表也会被移到顶部；仅安装/启用时执行一次，
+ * 旧版本安装时建在末尾的列表也会被移到顶部；每次启动时执行一次，
  * 不在每次同步时强制置顶，避免覆盖用户对列表顺序的手动调整。
  */
 async function ensureTop() {
   const lists = await host.listData.getUserLists()
   const target = lists.find(l => l.id === CACHE_LIST_ID) || lists.find(l => l.name === CACHE_LIST_NAME)
   if (!target) return
-  if (lists[0]?.id != target.id) await host.listData.moveUserList(target.id, 0)
+  if (lists[0]?.id == target.id) return
+  // moveUserList 为新版客户端新增接口；旧客户端缺少该接口时仅提示，不影响其它功能
+  if (typeof host.listData.moveUserList != 'function') {
+    if (host.logger) host.logger.warn('cached-music：当前客户端版本不含列表置顶接口，请更新客户端')
+    return
+  }
+  await host.listData.moveUserList(target.id, 0)
 }
 
 /** 按当前配置重建定时更新（先清掉旧定时器） */
@@ -193,12 +199,15 @@ module.exports = {
       ],
     })
 
-    // 安装/启用后：确保列表存在并同步一次，然后把「缓存列表」移到「我的列表」最上面
+    // 安装/启用后：确保列表存在并同步一次，启动定时更新；
+    // 置顶独立执行（失败不影响同步与定时器），每次启动都会校正一次
     Promise.resolve()
       .then(() => sync())
-      .then(() => ensureTop())
       .then(() => setupTimer())
       .catch(err => api.logger.error('cached-music 初始化失败：', err))
+    Promise.resolve()
+      .then(() => ensureTop())
+      .catch(err => api.logger.warn('cached-music 置顶「缓存列表」失败：', err))
   },
 
   /** 配置变更：重建定时更新 */
