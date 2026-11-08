@@ -154,6 +154,9 @@ export interface PluginSettingsSpec {
 /** 「喜欢」处理器：接收客户端「喜欢」菜单提交的歌曲（已归一化为 MusicInfo） */
 export type DefaultFavoriteHandler = (musicInfos: LX.Music.MusicInfo[]) => void
 
+/** 「缓存更新」处理器：软件的缓存状态发生变化（有歌曲缓存完成 / 用户清理缓存）时被调用 */
+export type CachedMusicUpdateHandler = () => void
+
 /**
  * 提供给插件的 API（host 端根据进程注入不同能力）。
  * 这是插件“覆盖/修改原代码功能”的主要手段：
@@ -252,6 +255,14 @@ export interface RendererPluginApi extends PluginApi {
    * 插件卸载/禁用时宿主自动撤销（菜单项同时隐藏）。传 null 可主动撤销。
    */
   setDefaultFavoriteHandler: (handler: DefaultFavoriteHandler | null) => void
+  /**
+   * 注册「缓存更新」处理器（**仅 renderer 端可用**）。
+   * 软件基于自身缓存机制登记已缓存完成的歌曲（在线歌曲完整播放后进入资源缓存），
+   * 缓存状态变化（歌曲缓存完成、用户在设置中清理缓存）时调用本处理器
+   * （插件据此同步「缓存列表」；配合 window.lx.plugins.musicCache 桥读取已缓存歌曲）。
+   * 插件卸载/禁用时宿主自动撤销。传 null 可主动撤销。
+   */
+  setCachedMusicUpdateHandler: (handler: CachedMusicUpdateHandler | null) => void
   /**
    * 注册本插件的设置面板，会出现在插件管理页（侧边栏「插件管理」）中该插件的「设置」按钮里。
    * 面板上的字段用声明式描述，由宿主渲染，插件无需自带 Vue 组件。

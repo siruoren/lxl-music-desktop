@@ -3,10 +3,12 @@ import musicSdk from '@renderer/utils/musicSdk'
 import { useI18n } from '@renderer/plugins/i18n'
 import { hasDislike } from '@renderer/core/dislikeList'
 import { hasDefaultFavoriteHandler } from '@root/plugins/defaultFavorite'
+import { CACHE_LIST_ID } from '@renderer/core/music/cacheList'
 
 export default ({
   assertApiSupport,
   emit,
+  listId,
 
   handleShowDownloadModal,
   handlePlayMusic,
@@ -21,6 +23,7 @@ export default ({
   handleCopyName,
   handleDislikeMusic,
   handleRemoveMusic,
+  handleRemoveMusicCache,
 }) => {
   const itemMenuControl = reactive({
     play: true,
@@ -104,6 +107,13 @@ export default ({
         action: 'dislike',
         disabled: !itemMenuControl.dislike,
       },
+      // 「移除缓存」菜单（仅「缓存列表」内显示）：移除指定歌曲的已缓存登记
+      ...(listId?.value == CACHE_LIST_ID
+        ? [{
+            name: t('list__remove_cache'),
+            action: 'removeCache',
+          }]
+        : []),
       {
         name: t('list__remove'),
         action: 'remove',
@@ -175,6 +185,9 @@ export default ({
         break
       case 'remove':
         handleRemoveMusic(index)
+        break
+      case 'removeCache':
+        handleRemoveMusicCache(index)
         break
       case 'sourceDetail':
         handleOpenMusicDetail(index)

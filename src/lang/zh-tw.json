@@ -86,6 +86,7 @@
   "list__collect": "收藏",
   "list__copy_name": "複製歌曲名",
   "list__dislike": "不喜歡",
+  "list__remove_cache": "移除快取",
   "list__download": "下載",
   "list__export_part_desc": "選取清單檔案儲存位置",
   "list__file": "定位檔案",

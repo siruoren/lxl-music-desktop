@@ -4,6 +4,7 @@ import { openUrl, clipboardWriteText } from '@common/utils/electron'
 import { dialog } from '@renderer/plugins/Dialog'
 import { useI18n } from '@renderer/plugins/i18n'
 import { removeListMusics } from '@renderer/store/list/action'
+import { removeCachedMusic } from '@renderer/core/music/cacheList'
 import { appSetting } from '@renderer/store/setting'
 import { formatMusicName, toOldMusicInfo } from '@renderer/utils/index'
 import { addDislikeInfo, hasDislike } from '@renderer/core/dislikeList'
@@ -68,11 +69,22 @@ export default ({ props, list, selectedList, removeAllSelect }) => {
     }
   }
 
+  /**
+   * 移除指定歌曲的缓存（「缓存列表」右键「移除缓存」）：
+   * 删除已缓存歌曲登记并通知插件同步列表；地址缓存随之失效，下次播放重新请求网络。
+   */
+  const handleRemoveMusicCache = async(index) => {
+    const minfo = list.value[index]
+    if (!minfo) return
+    await removeCachedMusic(minfo)
+  }
+
   return {
     handleSearch,
     handleOpenMusicDetail,
     handleCopyName,
     handleDislikeMusic,
     handleRemoveMusic,
+    handleRemoveMusicCache,
   }
 }
