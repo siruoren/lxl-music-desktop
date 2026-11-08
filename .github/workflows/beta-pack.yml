@@ -7,6 +7,9 @@ on:
 
 env:
   IS_CI: 'true'
+  # electron-builder 下载 Electron / 构建工具走国内镜像，规避 GitHub Releases 偶发 504
+  ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+  ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
 # 构建各平台安装包与插件，并由 Release 任务自动创建 GitHub Pre-release，
 # 把「各平台安装包 + 插件(.lxplugin)」一并上传为预发布附件。
