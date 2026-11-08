@@ -39,19 +39,17 @@ let initing: Promise<void> | null = null
 const currentUrls = new Map<string, string>()
 
 /** 懒初始化：从数据文件加载登记表 */
-function ensureInit(): Promise<void> {
-  if (!initing) {
-    initing = getMusicCacheSongs().then((list) => {
-      if (Array.isArray(list)) {
-        for (const item of list) {
-          if (item && typeof item.id === 'string' && item.musicInfo) songs.set(item.id, item)
-        }
+async function ensureInit(): Promise<void> {
+  initing ??= getMusicCacheSongs().then((list) => {
+    if (Array.isArray(list)) {
+      for (const item of list) {
+        if (item && typeof item.id === 'string' && item.musicInfo) songs.set(item.id, item)
       }
-    }).catch((err) => {
-      console.error('[musicCache] 加载已缓存歌曲登记表失败：', err)
-    })
-  }
-  return initing
+    }
+  }).catch((err) => {
+    console.error('[musicCache] 加载已缓存歌曲登记表失败：', err)
+  })
+  await initing
 }
 
 function persist(): void {
@@ -86,7 +84,7 @@ export const addCachedMusic = async(musicInfo: LX.Music.MusicInfo | LX.Download.
   }
   songs.set(musicInfo.id, {
     id: musicInfo.id,
-    musicInfo: musicInfo as LX.Music.MusicInfoOnline,
+    musicInfo,
     cachedAt: Date.now(),
     url,
   })
