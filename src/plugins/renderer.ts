@@ -28,8 +28,11 @@ import { appSetting, setApiSource } from '@renderer/store/setting'
 import { getUserApiList, importUserApi, removeUserApi } from '@renderer/utils/ipc'
 // === Plugin Manager === 收藏数据桥：让插件能读取/写回「我的列表」（收藏）
 import { getListMusics, overwriteListFull, addListMusics, createUserList } from '@renderer/store/list/action'
+import { overwriteListMusics, removeUserList } from '@renderer/store/list/listManage'
 import { defaultList, loveList, userLists } from '@renderer/store/list/state'
 import { fixNewMusicInfoQuality, filterMusicList } from '@renderer/utils'
+// === Plugin Manager === 音乐缓存桥：让插件读取「已缓存歌曲」登记表（缓存列表插件）
+import { getCachedMusics } from '@renderer/core/music/cacheList'
 import { toRaw } from '@common/utils/vueTools'
 import { LIST_IDS } from '@common/constants'
 import { HookBus } from './hookBus'
@@ -37,6 +40,7 @@ import { PatchManager } from './patch'
 import { createPluginApi, getPatchRecords, disposeApi, runShutdown } from './host'
 import type { HostContext } from './host'
 import { setDefaultFavoriteHandler } from './defaultFavorite'
+import { setCachedMusicUpdateHandler } from './cacheMusic'
 import { evaluatePluginModule } from './loader'
 import type { ModuleRequire } from './loader'
 import { PLUGIN_IPC } from './ipc'
@@ -273,9 +277,20 @@ const listDataBridge = {
   },
   /** 获取用户列表元信息（id/name 等，不含歌曲），供插件查重（如「我的喜欢」是否已存在） */
   getUserLists: async(): Promise<any[]> => toRaw(userLists).map(l => ({ ...toRaw(l) })),
-  /** 创建用户列表（追加到「我的列表」末尾；不查重，调用方自行确保不与现有列表冲突） */
-  createUserList: async(info: { id?: string, name?: string, source?: any, sourceListId?: string }): Promise<void> => {
+  /** 创建用户列表（默认追加到「我的列表」末尾，传 position 可指定插入位置，如 0 置顶；不查重，调用方自行确保不与现有列表冲突） */
+  createUserList: async(info: { id?: string, name?: string, source?: any, sourceListId?: string, position?: number }): Promise<void> => {
     await createUserList(info)
+  },
+  /** 读取指定列表的歌曲（含默认/收藏/用户列表） */
+  getListMusics: async(listId: string): Promise<any[]> => toRaw(await getListMusics(listId)),
+  /** 整体写回指定列表的歌曲（全量替换，供插件维护插件自有列表，如「缓存列表」） */
+  overwriteListMusics: async(listId: string, musicInfos: any[]): Promise<void> => {
+    const arr = Array.isArray(musicInfos) ? musicInfos : []
+    await overwriteListMusics({ listId, musicInfos: filterMusicList(arr).map(m => fixNewMusicInfoQuality(m)) })
+  },
+  /** 删除用户列表（仅移除列表本身；供插件卸载时清理插件自有列表，如「缓存列表」名） */
+  removeUserList: async(listId: string): Promise<void> => {
+    await removeUserList([listId])
   },
   /** 向指定列表批量添加歌曲（主进程按歌曲 id 去重；兼容带 progress 的下载项包装对象） */
   addMusics: async(listId: string, musicInfos: any[]): Promise<void> => {
@@ -467,6 +482,7 @@ export async function initUserPlugins(_app?: any): Promise<void> {
     setConfig: setConfigOf,
     registerSettings,
     registerDefaultFavorite: setDefaultFavoriteHandler,
+    registerCachedMusicUpdate: setCachedMusicUpdateHandler,
   }
 
   // 暴露给源码扩展点与插件
@@ -545,6 +561,13 @@ export async function initUserPlugins(_app?: any): Promise<void> {
 
   // ---- 收藏（我的列表）数据桥：供 sync-favorites 等插件备份/还原收藏 ----
   hostApi.listData = listDataBridge
+
+  // ---- 音乐缓存桥：软件缓存状态变化时通知插件（setCachedMusicUpdateHandler），
+  //      插件据此同步「缓存列表」；此处读取「已缓存歌曲」登记表 ----
+  hostApi.musicCache = {
+    /** 全部已缓存歌曲（[{ id, musicInfo, cachedAt }]，按缓存完成顺序） */
+    list: getCachedMusics,
+  }
 
   ;(window as any).lx.plugins = hostApi
 

@@ -8,7 +8,7 @@
  */
 import { type PatchManager } from './patch'
 import { type HookBus } from './hookBus'
-import type { DefaultFavoriteHandler, PluginApi, PluginPlatform, PluginSettingsSpec, RendererPluginApi } from './types'
+import type { CachedMusicUpdateHandler, DefaultFavoriteHandler, PluginApi, PluginPlatform, PluginSettingsSpec, RendererPluginApi } from './types'
 
 export interface HostContext {
   platform: PluginPlatform
@@ -41,6 +41,8 @@ export interface HostContext {
   controlPlayer?: (pluginId: string, action: LX.Player.StatusButtonActions, data?: any) => void
   /** 注册「喜欢」菜单处理器（仅 renderer 端提供）；传 null 撤销该插件的处理器 */
   registerDefaultFavorite?: (pluginId: string, handler: DefaultFavoriteHandler | null) => void
+  /** 注册「缓存更新」处理器（仅 renderer 端提供）；传 null 撤销该插件的处理器 */
+  registerCachedMusicUpdate?: (pluginId: string, handler: CachedMusicUpdateHandler | null) => void
 }
 
 export interface PatchRecord {
@@ -220,6 +222,15 @@ export function createPluginApi(
     api.setDefaultFavoriteHandler = (handler: DefaultFavoriteHandler | null) => {
       ctx.registerDefaultFavorite!(pluginId, handler ?? null)
       disposers.push(() => { ctx.registerDefaultFavorite!(pluginId, null) })
+    }
+  }
+
+  // 「缓存更新」扩展（仅 renderer 端）：软件缓存状态变化（歌曲缓存完成/清理缓存）时通知插件，
+  // 插件据此同步「缓存列表」。卸载/禁用插件时 disposeApi 自动撤销。
+  if (ctx.registerCachedMusicUpdate) {
+    api.setCachedMusicUpdateHandler = (handler: CachedMusicUpdateHandler | null) => {
+      ctx.registerCachedMusicUpdate!(pluginId, handler ?? null)
+      disposers.push(() => { ctx.registerCachedMusicUpdate!(pluginId, null) })
     }
   }
 

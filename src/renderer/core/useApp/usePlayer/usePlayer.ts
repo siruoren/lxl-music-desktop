@@ -32,6 +32,7 @@ import useVolume from './useVolume'
 import useWatchList from './useWatchList'
 import { HOTKEY_PLAYER } from '@common/hotKey'
 import { playNext, pause, playPrev, togglePlay, collectMusic, uncollectMusic, dislikeMusic } from '@renderer/core/player'
+import { addCachedMusic } from '@renderer/core/music/cacheList'
 import usePlaybackRate from './usePlaybackRate'
 import useSoundEffect from './useSoundEffect'
 import useMaxOutputChannelCount from './useMaxOutputChannelCount'
@@ -88,6 +89,8 @@ export default () => {
   const handleEnded = () => {
     // setTimeout(() => {
     setAllStatus(t('player__end'))
+    // 歌曲完整播放结束，音频已被软件缓存机制完整缓存，登记为「已缓存完成」并通知插件
+    void addCachedMusic(playMusicInfo.musicInfo)
     if (window.lx.isPlayedStop) {
       console.log('played stop')
       return

@@ -105,6 +105,7 @@
 
 <script>
 import { clipboardWriteText } from '@common/utils/electron'
+import { computed } from '@common/utils/vueTools'
 import { assertApiSupport } from '@renderer/store/utils'
 import SearchList from './components/SearchList.vue'
 import MusicSortModal from './components/MusicSortModal.vue'
@@ -215,6 +216,7 @@ export default {
       handleCopyName,
       handleDislikeMusic,
       handleRemoveMusic,
+      handleRemoveMusicCache,
     } = useMusicActions({ props, list, removeAllSelect, selectedList })
 
     const {
@@ -226,6 +228,7 @@ export default {
     } = useMenu({
       assertApiSupport,
       emit,
+      listId: computed(() => props.listId),
 
       handleShowDownloadModal,
       handlePlayMusic,
@@ -240,6 +243,7 @@ export default {
       handleCopyName,
       handleDislikeMusic,
       handleRemoveMusic,
+      handleRemoveMusicCache,
     })
 
     const {

@@ -4,6 +4,7 @@ import { type ProgressInfo, type UpdateDownloadedEvent, type UpdateInfo } from '
 import { markRaw } from '@common/utils/vueTools'
 import * as hotKeys from '@common/hotKey'
 import { APP_EVENT_NAMES, DATA_KEYS, DEFAULT_SETTING } from '@common/constants'
+import type { MusicCacheSong } from '@renderer/core/music/cacheList'
 
 type RemoveListener = () => void
 
@@ -212,6 +213,18 @@ export const saveSearchHistoryList = (list: LX.List.SearchHistoryList) => {
 // 获取搜索历史列表
 export const getSearchHistoryList = async() => {
   return rendererInvoke<string, string[] | null>(WIN_MAIN_RENDERER_EVENT_NAME.get_data, DATA_KEYS.searchHistoryList)
+}
+
+// 保存已缓存歌曲登记表（基于软件资源缓存机制，供「缓存列表」插件同步）
+export const saveMusicCacheSongs = (list: MusicCacheSong[]) => {
+  rendererSend(WIN_MAIN_RENDERER_EVENT_NAME.save_data, {
+    path: DATA_KEYS.musicCacheSongs,
+    data: list,
+  })
+}
+// 获取已缓存歌曲登记表
+export const getMusicCacheSongs = async() => {
+  return rendererInvoke<string, MusicCacheSong[] | null>(WIN_MAIN_RENDERER_EVENT_NAME.get_data, DATA_KEYS.musicCacheSongs)
 }
 
 export const saveListPositionInfo = (listPosition: LX.List.ListPositionInfo) => {

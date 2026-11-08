@@ -82,6 +82,7 @@ import { useI18n } from '@renderer/plugins/i18n'
 import { appSetting, updateSetting } from '@renderer/store/setting'
 import { overwriteListFull } from '@renderer/store/list/listManage'
 import { dislikeRuleCount } from '@renderer/store/dislikeList'
+import { clearCachedMusics } from '@renderer/core/music/cacheList'
 import DislikeListModal from './DislikeListModal.vue'
 import { TRAY_AUTO_ID } from '@common/constants'
 
@@ -117,7 +118,9 @@ export default {
         confirmButtonText: t('setting__other_resource_cache_confirm'),
       })) return
       isDisabledResourceCacheClear.value = true
-      void clearCache().then(() => {
+      void clearCache().then(async() => {
+        // 资源缓存已被清理，同步清空「已缓存歌曲」登记表并通知插件更新缓存列表
+        await clearCachedMusics().catch(() => {})
         refreshCacheSize()
         isDisabledResourceCacheClear.value = false
       })

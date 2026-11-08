@@ -20,6 +20,8 @@ import { getRandom } from '@renderer/utils/index'
 import { addListMusics, removeListMusics } from '@renderer/store/list/action'
 import { loveList } from '@renderer/store/list/state'
 import { addDislikeInfo } from '@renderer/core/dislikeList'
+// === Plugin Manager === 音乐缓存：记录播放地址（离线回退用）并在网络超时时回退到已缓存音频
+import { setCurrentMusicUrl, getFallbackMusicUrl } from '@renderer/core/music/cacheList'
 // import { checkMusicFileAvailable } from '@renderer/utils/music'
 
 let gettingUrlId = ''
@@ -93,21 +95,48 @@ const getMusicPlayUrl = async(musicInfo: LX.Music.MusicInfo | LX.Download.ListIt
   // const type = getPlayType(appSetting['player.highQuality'], musicInfo)
   let toggleMusicInfo = ('progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo).meta.toggleMusicInfo
 
-  return (toggleMusicInfo ? getMusicUrl({
-    musicInfo: toggleMusicInfo,
-    isRefresh,
-    allowToggleSource: false,
-  }) : Promise.reject(new Error('not found'))).catch(async() => {
-    return getMusicUrl({
-      musicInfo,
+  // 离线化播放：取播放地址需要联网时，若 2 秒内未返回（超时或失败），回退使用
+  // 已缓存歌曲登记的地址 —— 该地址对应的音频已完整进入资源缓存，可离线播放。
+  // 仅对在线歌曲生效（下载项/本地文件已有本地优先逻辑）。
+  const fetchUrl = () => {
+    let promise = (toggleMusicInfo ? getMusicUrl({
+      musicInfo: toggleMusicInfo,
       isRefresh,
-      onToggleSource(mInfo) {
-        if (diffCurrentMusicInfo(musicInfo)) return
-        setAllStatus(window.i18n.t('toggle_source_try'))
-      },
+      allowToggleSource: false,
+    }) : Promise.reject(new Error('not found'))).catch(async() => {
+      return getMusicUrl({
+        musicInfo,
+        isRefresh,
+        onToggleSource(mInfo) {
+          if (diffCurrentMusicInfo(musicInfo)) return
+          setAllStatus(window.i18n.t('toggle_source_try'))
+        },
+      })
     })
-  }).then(url => {
+    if (!('progress' in musicInfo) && musicInfo.source != 'local') {
+      promise = Promise.race([
+        promise,
+        new Promise<never>((_, reject) => { setTimeout(() => { reject(new Error('get url timeout')) }, 2000) }),
+      ]).catch(async(err: any) => {
+        if (err?.message != 'get url timeout') throw err
+        // 2 秒超时：有已缓存音频则直接用其地址播放；否则继续等待原请求结果
+        const cachedUrl = await getFallbackMusicUrl(musicInfo)
+        if (cachedUrl) {
+          // 原请求转入后台继续，失败不再向上传播（避免 unhandled rejection）
+          void promise.catch(() => {})
+          return cachedUrl
+        }
+        return promise
+      })
+    }
+    return promise
+  }
+
+  return fetchUrl().then(url => {
     if (window.lx.isPlayedStop || diffCurrentMusicInfo(musicInfo)) return null
+
+    // 记录本次播放使用的地址：播放完整结束后登记为「已缓存完成」（离线回退用）
+    setCurrentMusicUrl(musicInfo, url)
 
     return url
   // eslint-disable-next-line @typescript-eslint/promise-function-async
