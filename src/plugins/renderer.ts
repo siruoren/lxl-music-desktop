@@ -27,7 +27,7 @@ import { userApi } from '@renderer/store'
 import { appSetting, setApiSource } from '@renderer/store/setting'
 import { getUserApiList, importUserApi, removeUserApi } from '@renderer/utils/ipc'
 // === Plugin Manager === 收藏数据桥：让插件能读取/写回「我的列表」（收藏）
-import { getListMusics, overwriteListFull, addListMusics, createUserList } from '@renderer/store/list/action'
+import { getListMusics, overwriteListFull, addListMusics, createUserList, updateUserListPosition } from '@renderer/store/list/action'
 import { overwriteListMusics, removeUserList } from '@renderer/store/list/listManage'
 import { defaultList, loveList, userLists } from '@renderer/store/list/state'
 import { fixNewMusicInfoQuality, filterMusicList } from '@renderer/utils'
@@ -277,9 +277,17 @@ const listDataBridge = {
   },
   /** 获取用户列表元信息（id/name 等，不含歌曲），供插件查重（如「我的喜欢」是否已存在） */
   getUserLists: async(): Promise<any[]> => toRaw(userLists).map(l => ({ ...toRaw(l) })),
-  /** 创建用户列表（默认追加到「我的列表」末尾，传 position 可指定插入位置，如 0 置顶；不查重，调用方自行确保不与现有列表冲突） */
-  createUserList: async(info: { id?: string, name?: string, source?: any, sourceListId?: string, position?: number }): Promise<void> => {
-    await createUserList(info)
+  /** 创建用户列表（不传 position 追加到「我的列表」末尾；传 position 指定插入位置，如 0 置顶；不查重，调用方自行确保不与现有列表冲突） */
+  createUserList: async(info: { id: string, name: string, source?: any, sourceListId?: string, position?: number }): Promise<void> => {
+    const listInfo: LX.List.UserListInfo = {
+      id: info.id,
+      name: info.name,
+      source: info.source,
+      sourceListId: info.sourceListId,
+      locationUpdateTime: null,
+    }
+    // ListActionAdd.position < 0 表示追加到末尾（与主进程 createUserLists 语义一致）
+    await createUserList({ position: info.position ?? -1, listInfos: [listInfo] })
   },
   /** 读取指定列表的歌曲（含默认/收藏/用户列表） */
   getListMusics: async(listId: string): Promise<any[]> => toRaw(await getListMusics(listId)),
@@ -291,6 +299,10 @@ const listDataBridge = {
   /** 删除用户列表（仅移除列表本身；供插件卸载时清理插件自有列表，如「缓存列表」名） */
   removeUserList: async(listId: string): Promise<void> => {
     await removeUserList([listId])
+  },
+  /** 调整用户列表位置（供插件把自有列表移动到指定位置，如 0 置顶） */
+  moveUserList: async(listId: string, position: number): Promise<void> => {
+    await updateUserListPosition({ position, ids: [listId] })
   },
   /** 向指定列表批量添加歌曲（主进程按歌曲 id 去重；兼容带 progress 的下载项包装对象） */
   addMusics: async(listId: string, musicInfos: any[]): Promise<void> => {
