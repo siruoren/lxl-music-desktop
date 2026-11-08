@@ -3,8 +3,8 @@
  *
  * 功能：
  *   1. 安装/启用后，在「我的列表」最上方创建名为「缓存列表」的列表：
- *      - 已存在同名或同 id（cached）的列表 → 直接复用，不重复创建；
- *      - 不存在 → 以固定 id `cached` 创建，并置于所有列表最上面。
+ *      - 已存在同名或同 id（cached）的列表 → 直接复用，并移到所有列表最上面；
+ *      - 不存在 → 以固定 id `cached` 创建在所有列表最上面（position: 0）。
  *   2. 列表内容 = 所有「已缓存完成」的歌曲。基于软件自身的缓存机制：
  *      在线歌曲完整播放结束后，音频已被软件缓存（资源缓存 + 播放地址缓存），
  *      此时登记为已缓存完成；软件缓存状态变化（缓存完成 / 设置中清理缓存）
@@ -21,7 +21,7 @@
  *   - api.setCachedMusicUpdateHandler：缓存状态变化通知（卸载时自动撤销）
  *   - window.lx.plugins.musicCache：音乐缓存桥（list 读取已缓存歌曲登记表）
  *   - window.lx.plugins.listData：列表数据桥（getUserLists / createUserList /
- *     getListMusics / overwriteListMusics）
+ *     getListMusics / overwriteListMusics / moveUserList / removeUserList）
  *
  * 入口以 CommonJS 导出：
  *   module.exports = { setup, onConfigChange, onSettingsAction, uninstall }
@@ -106,6 +106,18 @@ function scheduleSync() {
   }, SYNC_DEBOUNCE_MS)
 }
 
+/**
+ * 确保「缓存列表」位于「我的列表」最上面（position 0）。
+ * 旧版本安装时建在末尾的列表也会被移到顶部；仅安装/启用时执行一次，
+ * 不在每次同步时强制置顶，避免覆盖用户对列表顺序的手动调整。
+ */
+async function ensureTop() {
+  const lists = await host.listData.getUserLists()
+  const target = lists.find(l => l.id === CACHE_LIST_ID) || lists.find(l => l.name === CACHE_LIST_NAME)
+  if (!target) return
+  if (lists[0]?.id != target.id) await host.listData.moveUserList(target.id, 0)
+}
+
 /** 按当前配置重建定时更新（先清掉旧定时器） */
 function setupTimer() {
   if (!host) return
@@ -181,9 +193,10 @@ module.exports = {
       ],
     })
 
-    // 安装/启用后立即确保列表存在并同步一次
+    // 安装/启用后：确保列表存在并同步一次，然后把「缓存列表」移到「我的列表」最上面
     Promise.resolve()
       .then(() => sync())
+      .then(() => ensureTop())
       .then(() => setupTimer())
       .catch(err => api.logger.error('cached-music 初始化失败：', err))
   },
