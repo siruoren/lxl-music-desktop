@@ -279,15 +279,13 @@ const listDataBridge = {
   getUserLists: async(): Promise<any[]> => toRaw(userLists).map(l => ({ ...toRaw(l) })),
   /** 创建用户列表（不传 position 追加到「我的列表」末尾；传 position 指定插入位置，如 0 置顶；不查重，调用方自行确保不与现有列表冲突） */
   createUserList: async(info: { id: string, name: string, source?: any, sourceListId?: string, position?: number }): Promise<void> => {
-    const listInfo: LX.List.UserListInfo = {
+    await createUserList({
       id: info.id,
       name: info.name,
       source: info.source,
       sourceListId: info.sourceListId,
-      locationUpdateTime: null,
-    }
-    // ListActionAdd.position < 0 表示追加到末尾（与主进程 createUserLists 语义一致）
-    await createUserList({ position: info.position ?? -1, listInfos: [listInfo] })
+      position: info.position,
+    })
   },
   /** 读取指定列表的歌曲（含默认/收藏/用户列表） */
   getListMusics: async(listId: string): Promise<any[]> => toRaw(await getListMusics(listId)),
