@@ -17,7 +17,7 @@ export default ({ selectedList, list }) => {
     }
   }
 
-  // 「喜欢」菜单（由「默认收藏」插件注册显示）：直接添加到「我的喜欢」，不弹窗
+  // 「收藏」直加菜单（由「默认收藏」插件注册显示）：直接添加到「我的收藏」，不弹窗
   const handleLikeMusic = (index, single) => {
     if (selectedList.value.length && !single) {
       // 下载项为带 progress 的包装对象，宿主 addMusics 内部会解包

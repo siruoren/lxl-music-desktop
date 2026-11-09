@@ -1,7 +1,7 @@
 {
   "id": "com.siruoren.default-favorite",
   "name": "default-favorite",
-  "description": "默认收藏：安装后在「我的列表」创建（或复用已有的）「我的喜欢」列表，并在歌曲右键菜单「收藏」上方新增「喜欢」菜单，点击直接添加到「我的喜欢」；原有收藏功能不变，卸载插件不会删除列表及其内容。",
+  "description": "默认收藏：安装后在歌曲右键菜单「添加到...」上方新增「收藏」菜单，点击直接把歌曲加入「我的收藏」列表，不弹窗、不创建新歌单；原有添加到列表功能不变，卸载插件菜单随之隐藏。",
   "author": "siruoren",
   "homepage": "",
   "platforms": ["renderer"],

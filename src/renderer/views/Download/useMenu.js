@@ -58,10 +58,10 @@ export default ({
         action: 'file',
         hide: !itemMenuControl.file,
       },
-      // 「喜欢」菜单（由「默认收藏」插件注册后显示），位于「收藏」上方
+      // 「收藏」直加菜单（由「默认收藏」插件注册后显示），位于「添加到...」上方
       ...(hasDefaultFavoriteHandler.value
         ? [{
-            name: t('list__like'),
+            name: t('list__collect'),
             action: 'like',
           }]
         : []),
