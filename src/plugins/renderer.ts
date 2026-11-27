@@ -275,7 +275,7 @@ const listDataBridge = {
     }
     return lists
   },
-  /** 获取用户列表元信息（id/name 等，不含歌曲），供插件查重（如「我的喜欢」是否已存在） */
+  /** 获取用户列表元信息（id/name 等，不含歌曲），供插件查重（判断某列表是否已存在） */
   getUserLists: async(): Promise<any[]> => toRaw(userLists).map(l => ({ ...toRaw(l) })),
   /** 创建用户列表（不传 position 追加到「我的列表」末尾；传 position 指定插入位置，如 0 置顶；不查重，调用方自行确保不与现有列表冲突） */
   createUserList: async(info: { id: string, name: string, source?: any, sourceListId?: string, position?: number }): Promise<void> => {

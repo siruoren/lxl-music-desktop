@@ -577,12 +577,15 @@ module.exports = {
               const userApi = bridge()
               let current = ''
               try { current = userApi ? (userApi.getActiveId() || '') : '' } catch { current = '' }
-              return state.sources.map(item => ({
-                name: item.name || item.url,
-                desc: `${item.url}${item.version ? ` · v${item.version}` : ''}`,
-                status: `${item.apiId === current ? '已勾选 · ' : ''}${item.updatedAt ? `更新于 ${formatTime(item.updatedAt)}` : '导入时间未知'}`,
-                value: item.apiId || undefined,
-              }))
+              // 按更新时间倒序展示（最近更新的在前）；账本本身顺序不变，勾选状态不受影响
+              return [...state.sources]
+                .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+                .map(item => ({
+                  name: item.name || item.url,
+                  desc: `${item.url}${item.version ? ` · v${item.version}` : ''}`,
+                  status: `${item.apiId === current ? '已勾选 · ' : ''}${item.updatedAt ? `更新于 ${formatTime(item.updatedAt)}` : '导入时间未知'}`,
+                  value: item.apiId || undefined,
+                }))
             },
             suffix: () => {
               const userApi = bridge()
